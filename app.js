@@ -31,7 +31,8 @@ db.run(`
 
 // 首页表单页面，绑定 '/'
 app.get('/', (req, res) => {
-  res.send(`
+  res.redirect('/records');
+});`
     <html>
       <head>
         <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
