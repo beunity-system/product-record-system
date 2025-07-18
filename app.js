@@ -1,8 +1,32 @@
-// 引入模块
 const express = require('express');
 const sqlite3 = require('sqlite3').verbose();
 const app = express();
-const port = process.env.PORT || 3020; // 根据环境自动适配端口
+const port = 3020;
+
+// 简单密码
+const PASSWORD = 'BEU678';
+
+// Basic Auth 中间件
+function checkPassword(req, res, next) {
+  const auth = req.headers['authorization'];
+
+  if (!auth) {
+    res.setHeader('WWW-Authenticate', 'Basic realm="Enter password"');
+    return res.status(401).send('Authentication required.');
+  }
+
+  const base64Credentials = auth.split(' ')[1];
+  const credentials = Buffer.from(base64Credentials, 'base64').toString('ascii');
+  // 格式 username:password
+  const [username, password] = credentials.split(':');
+
+  if (password === PASSWORD) {
+    next();
+  } else {
+    res.setHeader('WWW-Authenticate', 'Basic realm="Enter password"');
+    return res.status(401).send('Authentication failed.');
+  }
+}
 
 // 中间件
 app.use(express.urlencoded({ extended: true }));
@@ -29,14 +53,8 @@ db.run(`
   )
 `);
 
-// 根路径直接跳转到表单页
-app.get('/', (req, res) => {
-  // 重定向到 records 页面
-  res.redirect('/records');
-});
-
-// 表单页面
-app.get('/records', (req, res) => {
+// 首页表单页面，带密码验证
+app.get('/', checkPassword, (req, res) => {
   res.send(`
     <!DOCTYPE html>
     <html>
@@ -47,20 +65,22 @@ app.get('/records', (req, res) => {
             font-family: Arial, sans-serif;
             display: flex;
             justify-content: center;
-            align-items: flex-start; /* 改成顶部对齐 */
-            min-height: 100vh;       /* 改成 min-height，允许超出滚动 */
+            align-items: center;
+            height: 100vh;
             margin: 0;
             background-color: #f4f4f4;
-            padding: 20px 0;         /* 顶部和底部加点空间 */
-            overflow-y: auto;        /* 保证纵向可滚动 */
-           }
+            overflow-y: auto; /* 允许竖直滚动 */
+          }
+
           .form-container {
             background-color: white;
             padding: 20px;
             border-radius: 8px;
             box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-            max-width: 500px;
-            margin: 40px auto;
+            width: 500px;
+            max-width: 95vw;
+            max-height: 95vh;
+            overflow-y: auto;
           }
           h1 {
             text-align: center;
@@ -193,7 +213,7 @@ app.get('/records', (req, res) => {
   `);
 });
 
-// 提交表单
+// 提交表单（不加密码验证，你也可以加）
 app.post('/submit', (req, res) => {
   const { name, product_name, quantity, signature, date } = req.body;
   const query = `
@@ -213,18 +233,28 @@ app.post('/submit', (req, res) => {
   });
 });
 
-// 删除记录
-app.get('/delete/:id', (req, res) => {
-  const id = req.params.id;
-  db.run('DELETE FROM product_records WHERE id = ?', [id], function(err) {
+// 查看所有记录，带密码验证
+app.get('/records', checkPassword, (req, res) => {
+  db.all('SELECT * FROM product_records', [], (err, rows) => {
     if (err) {
-      return res.status(500).send('Error deleting record: ' + err.message);
+      return res.status(500).send('Error loading records.');
     }
-    res.redirect('/records');
+
+    let html = '<h1>All Records</h1><table border="1" cellpadding="8" style="border-collapse: collapse;"><tr><th>ID</th><th>Name</th><th>Product</th><th>Qty</th><th>Date</th><th>Signature</th><th>Action</th></tr>';
+    rows.forEach(row => {
+      html += `<tr>
+        <td>${row.id}</td>
+        <td>${row.name}</td>
+        <td>${row.product_name}</td>
+        <td>${row.quantity}</td>
+        <td>${row.date}</td>
+        <td><img src="${row.signature}" width="150" /></td>
+        <td><a href="/delete/${row.id}" style="color:red;">Delete</a></td>
+      </tr>`;
+    });
+    html += '</table><br><a href="/">Back to Form</a>';
+    res.send(html);
   });
 });
 
-// 启动服务器
-app.listen(port, () => {
-console.log(`http://localhost:${port}`);
-});
+// 删除记录（不加密码验证，可以根据
