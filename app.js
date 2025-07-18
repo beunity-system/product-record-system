@@ -256,5 +256,18 @@ app.get('/records', checkPassword, (req, res) => {
     res.send(html);
   });
 });
+// 删除记录（不加密码验证，可以根据需要加）
+app.get('/delete/:id', (req, res) => {
+  const id = req.params.id;
+  db.run('DELETE FROM product_records WHERE id = ?', [id], function(err) {
+    if (err) {
+      return res.status(500).send('Error deleting record: ' + err.message);
+    }
+    res.redirect('/records');
+  });
+});
 
-// 删除记录（不加密码验证，可以根据
+// 启动服务器
+app.listen(port, () => {
+  console.log(`服务器运行在 http://localhost:${port}`);
+});
