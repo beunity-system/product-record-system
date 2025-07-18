@@ -1,3 +1,27 @@
+const PASSWORD = 'beunity123'; // 你自己设定的密码
+
+// 简单认证中间件
+function authMiddleware(req, res, next) {
+  const auth = req.headers.authorization;
+
+  if (!auth) {
+    res.set('WWW-Authenticate', 'Basic realm="Protected Area"');
+    return res.status(401).send('Authentication required.');
+  }
+
+  // 解码 Basic Auth
+  const encoded = auth.split(' ')[1];
+  const decoded = Buffer.from(encoded, 'base64').toString();
+  const [user, pass] = decoded.split(':');
+
+  if (pass === PASSWORD) {
+    next(); // 密码正确，放行
+  } else {
+    res.set('WWW-Authenticate', 'Basic realm="Protected Area"');
+    res.status(401).send('Access denied.');
+  }
+}
+
 // 引入模块
 const express = require('express');
 const sqlite3 = require('sqlite3').verbose();
@@ -30,7 +54,7 @@ db.run(`
 `);
 
 // 首页表单页面
-app.get('/', (req, res) => {
+app.get('/records', authMiddleware, (req, res) => {
   res.send(`
     <html>
       <head>
