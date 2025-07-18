@@ -29,8 +29,8 @@ db.run(`
   )
 `);
 
-// 首页表单页面
-app.get('/records', (req, res) => {
+// 首页表单页面，绑定 '/'
+app.get('/', (req, res) => {
   res.send(`
     <html>
       <head>
@@ -203,7 +203,7 @@ app.post('/submit', (req, res) => {
   });
 });
 
-// 查看记录
+// 查看所有记录页面
 app.get('/records', (req, res) => {
   db.all('SELECT * FROM product_records', [], (err, rows) => {
     if (err) {
