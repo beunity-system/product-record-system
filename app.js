@@ -1,10 +1,12 @@
+const dotenv = require('dotenv');
+dotenv.config();
 const express = require('express');
 const sqlite3 = require('sqlite3').verbose();
 const app = express();
 const port = 3020;
 
 // 简单密码
-const PASSWORD = 'BEU678';
+const PASSWORD = process.env.FORM_PASSWORD;
 
 // Basic Auth 中间件
 function checkPassword(req, res, next) {
@@ -257,7 +259,7 @@ app.get('/records', checkPassword, (req, res) => {
   });
 });
 // 删除记录（不加密码验证，可以根据需要加）
-app.get('/delete/:id', (req, res) => {
+app.get('/delete/:id', checkPassword, (req, res) => {
   const id = req.params.id;
   db.run('DELETE FROM product_records WHERE id = ?', [id], function(err) {
     if (err) {
