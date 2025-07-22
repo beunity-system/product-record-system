@@ -123,8 +123,7 @@ app.get('/', checkPassword, (req, res) => {
       <body>
         <div class="form-container">
           <div style="display: flex; align-items: center; gap: 10px; justify-content: center; margin-bottom: 20px;">
-           <img src="/beunity_logo.jpg" alt="Beunity Logo" style="height: 50px;">
-           <h1 style="margin: 0;">Beunity Product Record</h1>
+            <h1 style="margin: 0;">Beunity Product Record</h1>
           </div>
 
           <form method="POST" action="/submit">
