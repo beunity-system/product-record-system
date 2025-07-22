@@ -2,7 +2,8 @@ const dotenv = require('dotenv');
 dotenv.config();
 const express = require('express');
 const sqlite3 = require('sqlite3').verbose();
-const app = express();
+const app = express(); 
+app.use(express.static('public'));
 const port = 3020;
 
 // 简单密码
@@ -121,7 +122,11 @@ app.get('/', checkPassword, (req, res) => {
       </head>
       <body>
         <div class="form-container">
-          <h1>Beunity Product Record </h1>
+          <div style="display: flex; align-items: center; gap: 10px; justify-content: center; margin-bottom: 20px;">
+           <img src="/beunity_logo.jpg" alt="Beunity Logo" style="height: 50px;">
+           <h1 style="margin: 0;">Beunity Product Record</h1>
+          </div>
+
           <form method="POST" action="/submit">
             <label for="name">Name:</label>
             <input type="text" name="name" required>
