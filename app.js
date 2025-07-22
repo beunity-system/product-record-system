@@ -121,7 +121,7 @@ app.get('/', checkPassword, (req, res) => {
       </head>
       <body>
         <div class="form-container">
-          <h1>Product Record Form</h1>
+          <h1>Beunity Product Record </h1>
           <form method="POST" action="/submit">
             <label for="name">Name:</label>
             <input type="text" name="name" required>
