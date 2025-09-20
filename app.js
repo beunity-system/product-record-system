@@ -39,7 +39,7 @@ const pool = new Pool({
   ssl: { rejectUnauthorized: false }
 });
 
-// ✅ 初始化表结构
+// ✅ 初始化表结构（合并为 timestamp）
 (async () => {
   try {
     await pool.query(`
@@ -48,7 +48,7 @@ const pool = new Pool({
         name TEXT,
         product_name TEXT,
         quantity INTEGER,
-        date TEXT,
+        timestamp TIMESTAMP,
         signature TEXT
       )
     `);
@@ -92,7 +92,10 @@ app.get('/', checkPassword, (req, res) => {
         <input type="number" name="quantity" required>
 
         <label for="date">Date:</label>
-        <input type="date" name="date" required>
+        <input type="date" name="date" id="date" required>
+
+        <label for="time">Time:</label>
+        <input type="time" name="time" id="time" required>
 
         <label for="signature">Signature:</label>
         <canvas id="signatureCanvas" width="400" height="100"></canvas>
@@ -103,6 +106,11 @@ app.get('/', checkPassword, (req, res) => {
       </form>
     </div>
     <script>
+      // 自动填入当前日期和时间
+      const now = new Date();
+      document.getElementById('date').value = now.toISOString().split('T')[0];
+      document.getElementById('time').value = now.toTimeString().slice(0,5);
+
       const canvas = document.getElementById('signatureCanvas');
       const ctx = canvas.getContext('2d');
       let isDrawing = false;
@@ -171,13 +179,15 @@ app.get('/', checkPassword, (req, res) => {
 
 // 提交表单
 app.post('/submit', async (req, res) => {
-  const { name, product_name, quantity, signature, date } = req.body;
+  const { name, product_name, quantity, signature, date, time } = req.body;
+  const timestamp = new Date(`${date}T${time}:00`);
+
   const query = `
-    INSERT INTO product_records (name, date, product_name, quantity, signature)
+    INSERT INTO product_records (name, product_name, quantity, timestamp, signature)
     VALUES ($1, $2, $3, $4, $5)
   `;
   try {
-    await pool.query(query, [name, date, product_name, quantity, signature]);
+    await pool.query(query, [name, product_name, quantity, timestamp, signature]);
     res.send(`
       <h1>Record Saved!</h1>
       <p><a href="/">Back to Form</a> | <a href="/records">View Records</a></p>
@@ -190,15 +200,19 @@ app.post('/submit', async (req, res) => {
 // 查看所有记录
 app.get('/records', checkPassword, async (req, res) => {
   try {
-    const result = await pool.query('SELECT * FROM product_records ORDER BY id DESC');
-    let html = '<h1>All Records</h1><table border="1" cellpadding="8" style="border-collapse: collapse;"><tr><th>ID</th><th>Name</th><th>Product</th><th>Qty</th><th>Date</th><th>Signature</th><th>Action</th></tr>';
+    const result = await pool.query('SELECT * FROM product_records ORDER BY timestamp DESC');
+    let html = '<h1>All Records</h1><table border="1" cellpadding="8" style="border-collapse: collapse;"><tr><th>ID</th><th>Name</th><th>Product</th><th>Qty</th><th>Date</th><th>Time</th><th>Signature</th><th>Action</th></tr>';
     result.rows.forEach(row => {
+      const ts = new Date(row.timestamp);
+      const dateStr = ts.toISOString().split('T')[0];
+      const timeStr = ts.toTimeString().slice(0,5);
       html += `<tr>
         <td>${row.id}</td>
         <td>${row.name}</td>
         <td>${row.product_name}</td>
         <td>${row.quantity}</td>
-        <td>${row.date}</td>
+        <td>${dateStr}</td>
+        <td>${timeStr}</td>
         <td><img src="${row.signature}" width="150" /></td>
         <td><a href="/delete/${row.id}" style="color:red;">Delete</a></td>
       </tr>`;
