@@ -1,7 +1,7 @@
 {
   "name": "product-record-system",
   "version": "1.0.0",
-  "main": "index.js",
+  "main": "app.js",
   "scripts": {
     "start": "node app.js",
     "test": "echo \"Error: no test specified\" && exit 1"
@@ -14,7 +14,7 @@
     "dotenv": "^17.2.0",
     "express": "^4.21.2",
     "express-session": "^1.18.2",
-    "sqlite3": "^5.1.7"
+    "pg": "^8.16.3"
   },
   "devDependencies": {
     "nodemon": "^3.1.9"
